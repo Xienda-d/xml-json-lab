@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Catalogue</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f7f7f7; }
+        h1 { color: #2c3e50; }
+        .book { background: #fff; border-left: 5px solid #3498db; padding: 15px 20px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .book h3 { margin: 0 0 8px 0; color: #2c3e50; }
+        .book p { margin: 4px 0; color: #555; }
+        .book .price { font-weight: bold; color: #27ae60; }
+        #status { color: #888; font-style: italic; }
+        .error { color: #c0392b; }
+    </style>
+</head>
+<body>
+    <h1>Book Catalogue</h1>
+    <p id="status">Loading...</p>
+    <div id="books"></div>
+
+    <script>
+        fetch('book.xml')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Fetch error: ' + response.status);
+                }
+                return response.text();
+            })
+            .then(xmlText => {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+                // Check for parse errors
+                const parseError = xmlDoc.getElementsByTagName('parsererror');
+                if (parseError.length > 0) {
+                    document.getElementById('status').textContent = 'Error parsing XML.';
+                    throw new Error('XML parse error');
+                }
+
+                const books = xmlDoc.getElementsByTagName('book');
+                const container = document.getElementById('books');
+                let html = '';
+
+                for (let i = 0; i < books.length; i++) {
+                    const book = books[i];
+                    const id = book.getAttribute('id');
+                    const title = book.getElementsByTagName('title')[0].textContent;
+                    const author = book.getElementsByTagName('author')[0].textContent;
+                    const price = book.getElementsByTagName('price')[0].textContent;
+
+                    html += '<div class="book">' +
+                                '<h3>Book #' + id + '</h3>' +
+                                '<p><strong>Title:</strong> ' + title + '</p>' +
+                                '<p><strong>Author:</strong> ' + author + '</p>' +
+                                '<p class="price"><strong>Price:</strong> $' + price + '</p>' +
+                            '</div>';
+                }
+
+                container.innerHTML = html;
+                document.getElementById('status').textContent = books.length + ' books loaded from book.xml.';
+            })
+            .catch(err => {
+                document.getElementById('status').innerHTML = '<span class="error">Fetch error: ' + err.message + '</span>';
+                console.error('Fetch error: ' + err.message);
+            });
+    </script>
+</body>
+</html>
